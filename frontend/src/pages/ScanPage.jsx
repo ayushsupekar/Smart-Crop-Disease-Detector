@@ -83,12 +83,7 @@ export const ScanPage = () => {
       formData.append('field_location', fieldLocation);
       if (notes) formData.append('notes', notes);
 
-      // Add minimum delay so user enjoys the realistic scanning animation
-      const [result] = await Promise.all([
-        predictLeafDisease(formData),
-        new Promise((resolve) => setTimeout(resolve, 2000))
-      ]);
-
+      const result = await predictLeafDisease(formData);
       setScanResult(result);
     } catch (err) {
       console.error("Analysis failed:", err);

@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from time import perf_counter
 from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,7 @@ from app.database import Base, engine, SessionLocal, get_db
 from app.models.disease import DiseaseInfo
 from app.models.user import User
 from app.models.scan import Scan
+from app.ml.fruit_model import fruit_classifier
 from app.utils.security import get_password_hash
 from app.utils.file_storage import ensure_upload_dir
 from app.routes import auth, scans, crops, analytics
@@ -46,6 +48,7 @@ async def log_prediction_request_ids(request: Request, call_next):
 
     cf_ray = request.headers.get("cf-ray", "-")
     rndr_id = request.headers.get("rndr-id", "-")
+    started_at = perf_counter()
     logger.info(
         "Prediction HTTP request received method=%s path=%s cf_ray=%s rndr_id=%s",
         request.method,
@@ -57,19 +60,21 @@ async def log_prediction_request_ids(request: Request, call_next):
         response = await call_next(request)
     except Exception:
         logger.exception(
-            "Prediction HTTP request raised method=%s path=%s cf_ray=%s rndr_id=%s",
+            "Prediction HTTP request raised method=%s path=%s duration_ms=%.1f cf_ray=%s rndr_id=%s",
             request.method,
             request.url.path,
+            (perf_counter() - started_at) * 1000,
             cf_ray,
             rndr_id,
         )
         raise
 
     logger.info(
-        "Prediction HTTP response method=%s path=%s status=%s cf_ray=%s rndr_id=%s",
+        "Prediction HTTP response method=%s path=%s status=%s duration_ms=%.1f cf_ray=%s rndr_id=%s",
         request.method,
         request.url.path,
         response.status_code,
+        (perf_counter() - started_at) * 1000,
         cf_ray,
         rndr_id,
     )
@@ -233,6 +238,10 @@ def startup_populate_seed():
 
     finally:
         db.close()
+        try:
+            fruit_classifier.load()
+        except Exception:
+            logger.exception("Fruit classifier warm-up failed; fruit predictions may be unavailable.")
 
 @app.get("/")
 def health_check():

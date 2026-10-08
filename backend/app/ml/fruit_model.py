@@ -26,6 +26,9 @@ class FruitDiseaseModel:
         self._classifier: SVC | None = None
         self._load_lock = threading.Lock()
 
+    def load(self) -> None:
+        self._get_classifier()
+
     def _get_classifier(self) -> SVC:
         if self._classifier is not None:
             return self._classifier

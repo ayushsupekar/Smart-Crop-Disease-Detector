@@ -150,7 +150,7 @@ Inference is modularized in `backend/app/ml/model.py`.
 
 ### Fruit Disease Classifier
 
-Choose **Citrus disease** in the scan page before uploading or capturing a citrus fruit photo. This repository does not contain a separate Citrus Keras model: the existing Citrus implementation trains an SVM once from the tracked feature arrays bundled in `backend/app/ml/fruit_data/`. The class order comes from that project's training script: Black spot, Canker, Greening, Healthy, and Scab. It does not identify fruit species. The supplied project contains only 150 feature samples and no verified treatment reference, so its score is approximate and the app intentionally does not show leaf treatment advice for fruit results.
+Choose **Citrus disease** in the scan page before uploading or capturing a citrus fruit photo. This repository does not contain a separate Citrus Keras model: the existing Citrus implementation trains an SVM from the tracked feature arrays bundled in `backend/app/ml/fruit_data/`. The classifier is warmed once during backend startup, moving training time out of the first user prediction; a cold backend start takes longer as a result. The class order comes from that project's training script: Black spot, Canker, Greening, Healthy, and Scab. It does not identify fruit species. The supplied project contains only 150 feature samples and no verified treatment reference, so its score is approximate and the app intentionally does not show leaf treatment advice for fruit results.
 
 ---
 
